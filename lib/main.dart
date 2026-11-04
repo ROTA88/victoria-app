@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Imports dos Relatórios (Gráfico e PDF)
+// Imports dos Relatórios e Gráficos
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-// ==========================================
-// IMPORTS DAS NOTIFICAÇÕES (Isso resolve as linhas vermelhas!)
-// ==========================================
+// Imports das Notificações
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -25,12 +23,10 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 Future<void> inicializarNotificacoes() async {
-  tz.initializeTimeZones(); // Prepara os fusos horários
+  tz.initializeTimeZones();
 
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings(
-        '@mipmap/launcher_icon',
-      ); // Usa seu ícone da Victoria
+      AndroidInitializationSettings('@mipmap/launcher_icon');
 
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
@@ -46,9 +42,7 @@ Future<void> agendarLembrete(
   int horas,
 ) async {
   final agora = tz.TZDateTime.now(tz.local);
-  final dataAgendada = agora.add(
-    Duration(hours: horas),
-  ); // Agenda para X horas no futuro
+  final dataAgendada = agora.add(Duration(hours: horas));
 
   const AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
@@ -57,7 +51,7 @@ Future<void> agendarLembrete(
         channelDescription: 'Avisa quando é hora de alimentar ou dar remédio',
         importance: Importance.max,
         priority: Priority.high,
-        color: Color(0xFFF48FB1), // Cor rosa da notificação
+        color: Color(0xFFF48FB1),
       );
 
   const NotificationDetails platformChannelSpecifics = NotificationDetails(
@@ -70,8 +64,7 @@ Future<void> agendarLembrete(
     corpo,
     dataAgendada,
     platformChannelSpecifics,
-    androidScheduleMode: AndroidScheduleMode
-        .exactAllowWhileIdle, // Permite tocar mesmo com celular bloqueado
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime,
   );
@@ -89,10 +82,10 @@ Future<void> main() async {
   // Liga o motor de notificações
   await inicializarNotificacoes();
 
-  // ATENÇÃO: Coloque sua URL e Chave reais do Supabase aqui
+  // ATENÇÃO: Coloque sua URL e Chave reais do Supabase aqui!
   await Supabase.initialize(
-    url: 'https://SEU_PROJETO.supabase.co',
-    anonKey: 'SUA_CHAVE',
+    url: 'https://msebzeioagpncicqyvjt.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zZWJ6ZWlvYWdwbmNpY3F5dmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2OTcyNDMsImV4cCI6MjEwODI3MzI0M30.FBip1B6co7Rl3dnDq7ZPuL36xIRGCA4hoE1LKcUfW3s',
   );
 
   runApp(const VictoriaApp());
@@ -111,7 +104,7 @@ class VictoriaApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFF48FB1),
-          background: const Color(0xFFFAFAFA),
+          surface: const Color(0xFFFAFAFA),
         ),
         useMaterial3: true,
         textTheme: GoogleFonts.nunitoTextTheme(),
@@ -122,9 +115,8 @@ class VictoriaApp extends StatelessWidget {
 }
 
 // ==========================================
-// 1. GERENCIAMENTO DE SESSÃO E CARREGAMENTO
+// 1. GERENCIAMENTO DE SESSÃO
 // ==========================================
-
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -229,7 +221,6 @@ class _DataLoaderScreenState extends State<DataLoaderScreen> {
 // ==========================================
 // 2. NAVEGAÇÃO E TELAS PRINCIPAIS
 // ==========================================
-
 class MainNavigator extends StatefulWidget {
   const MainNavigator({super.key});
 
@@ -294,7 +285,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 const HeaderSection(),
                 const SizedBox(height: 32),
-                const SummarySection(), // Onde a mágica dos cálculos acontece
+                const SummarySection(),
                 const SizedBox(height: 32),
                 Text(
                   'Ações Rápidas',
@@ -375,10 +366,6 @@ class HeaderSection extends StatelessWidget {
   }
 }
 
-// ==========================================
-// MATEMÁTICA E CÁLCULOS DO DASHBOARD
-// ==========================================
-
 class SummarySection extends StatefulWidget {
   const SummarySection({super.key});
 
@@ -392,7 +379,6 @@ class _SummarySectionState extends State<SummarySection> {
   @override
   void initState() {
     super.initState();
-    // Atualiza a tela a cada 1 minuto para o cronômetro funcionar
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) setState(() {});
     });
@@ -407,7 +393,6 @@ class _SummarySectionState extends State<SummarySection> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      // Ouve todos os eventos para calcular os resumos
       stream: supabase
           .from('eventos')
           .stream(primaryKey: ['id'])
@@ -416,7 +401,6 @@ class _SummarySectionState extends State<SummarySection> {
       builder: (context, snapshot) {
         final eventos = snapshot.data ?? [];
 
-        // Filtra os últimos eventos de cada tipo
         final ultimaMamada = eventos.cast<Map<String, dynamic>?>().firstWhere(
           (e) => e?['tipo'] == 'alimentacao',
           orElse: () => null,
@@ -430,8 +414,7 @@ class _SummarySectionState extends State<SummarySection> {
           orElse: () => null,
         );
 
-        // Lógica da Mamada
-        String tempoFaltando = "Nenhuma mamada registrada";
+        String tempoFaltando = "Nenhuma registrada";
         String resumoUltima = "";
         Color heroColor = Theme.of(context).colorScheme.primary;
 
@@ -446,7 +429,7 @@ class _SummarySectionState extends State<SummarySection> {
 
           if (diff.isNegative) {
             tempoFaltando = "Atrasado ${diff.abs().inMinutes} min";
-            heroColor = Colors.red.shade400; // Fica vermelho se atrasar!
+            heroColor = Colors.red.shade400;
           } else {
             tempoFaltando =
                 "Em ${diff.inHours}h e ${diff.inMinutes.remainder(60)}m";
@@ -457,29 +440,24 @@ class _SummarySectionState extends State<SummarySection> {
           resumoUltima = "Última vez às $horaStr";
         }
 
-        // Lógica do Peso
         String pesoStr = "-- kg";
         String dataPesoStr = "Registre hoje";
         if (ultimoPeso != null) {
-          final dados = ultimoPeso['dados'];
-          pesoStr = "${dados['peso']} kg";
+          pesoStr = "${ultimoPeso['dados']['peso']} kg";
           dataPesoStr = "Atualizado recentemente";
         }
 
-        // Lógica do Remédio
         String remedioStr = "Nenhum";
         String horaRemedioStr = "--:--";
         if (ultimoRemedio != null) {
-          final dados = ultimoRemedio['dados'];
           final dataRem = DateTime.parse(ultimoRemedio['criado_em']).toLocal();
-          remedioStr = dados['nome'] ?? "Remédio";
+          remedioStr = ultimoRemedio['dados']['nome'] ?? "Remédio";
           horaRemedioStr =
               '${dataRem.hour.toString().padLeft(2, '0')}:${dataRem.minute.toString().padLeft(2, '0')}';
         }
 
         return Column(
           children: [
-            // Card Principal
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -542,7 +520,6 @@ class _SummarySectionState extends State<SummarySection> {
               ),
             ),
             const SizedBox(height: 16),
-            // Cards Secundários
             Row(
               children: [
                 Expanded(
@@ -767,7 +744,6 @@ class _QuickActionCard extends StatelessWidget {
 
 class TimelineScreen extends StatefulWidget {
   const TimelineScreen({super.key});
-
   @override
   State<TimelineScreen> createState() => _TimelineScreenState();
 }
@@ -775,69 +751,55 @@ class TimelineScreen extends StatefulWidget {
 class _TimelineScreenState extends State<TimelineScreen> {
   DateTime _dataSelecionada = DateTime.now();
 
-  // Função para mudar o dia pelas setinhas
   void _mudarData(int dias) {
     setState(() {
       _dataSelecionada = _dataSelecionada.add(Duration(days: dias));
     });
   }
 
-  // Função para abrir o Calendário nativo
   Future<void> _escolherData() async {
     final DateTime? escolhida = await showDatePicker(
       context: context,
       initialDate: _dataSelecionada,
-      firstDate: DateTime(2023), // Ano mínimo
-      lastDate: DateTime.now(), // Não permite selecionar dias no futuro
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context)
-                  .colorScheme
-                  .primary, // Cor do calendário
-            ),
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).colorScheme.primary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-
-    if (escolhida != null && escolhida != _dataSelecionada) {
+    if (escolhida != null && escolhida != _dataSelecionada)
       setState(() {
         _dataSelecionada = escolhida;
       });
-    }
   }
 
-  // Formata a data para ficar amigável
   String _formatarData(DateTime data) {
     final hoje = DateTime.now();
     final ontem = hoje.subtract(const Duration(days: 1));
-
     if (data.year == hoje.year &&
         data.month == hoje.month &&
-        data.day == hoje.day) {
+        data.day == hoje.day)
       return 'Hoje';
-    } else if (data.year == ontem.year &&
+    else if (data.year == ontem.year &&
         data.month == ontem.month &&
-        data.day == ontem.day) {
+        data.day == ontem.day)
       return 'Ontem';
-    }
     return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
   }
 
   @override
   Widget build(BuildContext context) {
-    // Calcula o Início e o Fim do dia selecionado para filtrar no banco
     final inicioDoDia = DateTime(
       _dataSelecionada.year,
       _dataSelecionada.month,
       _dataSelecionada.day,
     );
     final fimDoDia = inicioDoDia.add(const Duration(days: 1, milliseconds: -1));
-
-    // Verifica se a data selecionada é hoje para desativar a setinha de avançar
     final hoje = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -846,7 +808,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
     final podeAvancar = _dataSelecionada.isBefore(hoje);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
           'Linha do Tempo',
@@ -858,9 +820,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
       ),
       body: Column(
         children: [
-          // ==============================
-          // 1. HEADER DO FILTRO DE DATA
-          // ==============================
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
@@ -869,7 +828,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Setinha para voltar (ontem, anteontem)
                 IconButton(
                   onPressed: () => _mudarData(-1),
                   icon: Icon(
@@ -878,8 +836,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
                     size: 30,
                   ),
                 ),
-
-                // Botão de Data (Abre calendário)
                 InkWell(
                   onTap: _escolherData,
                   borderRadius: BorderRadius.circular(20),
@@ -913,8 +869,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
                     ),
                   ),
                 ),
-
-                // Setinha para avançar (só funciona se não for hoje)
                 IconButton(
                   onPressed: podeAvancar ? () => _mudarData(1) : null,
                   icon: Icon(
@@ -929,13 +883,8 @@ class _TimelineScreenState extends State<TimelineScreen> {
             ),
           ),
           const Divider(),
-
-          // ==============================
-          // 2. LISTA DE EVENTOS DO DIA
-          // ==============================
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              // Filtro Mágico do Supabase: gte (maior ou igual) e lte (menor ou igual)
               stream: supabase
                   .from('eventos')
                   .stream(primaryKey: ['id'])
@@ -944,16 +893,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
                   .lte('criado_em', fimDoDia.toUtc().toIso8601String())
                   .order('criado_em', ascending: false),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting)
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
+                if (snapshot.hasError)
                   return Center(child: Text('Erro: ${snapshot.error}'));
-                }
                 final eventos = snapshot.data ?? [];
-
-                // Se não tiver eventos neste dia
-                if (eventos.isEmpty) {
+                if (eventos.isEmpty)
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -974,9 +919,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
                       ],
                     ),
                   );
-                }
-
-                // Se tiver eventos, mostra a lista
                 return ListView.builder(
                   padding: const EdgeInsets.all(16),
                   physics: const BouncingScrollPhysics(),
@@ -1098,31 +1040,22 @@ class _EventCard extends StatelessWidget {
   }
 }
 
-// ==========================================
-// 4. ABA DE RELATÓRIOS E GRÁFICOS (COMPLETA)
-// ==========================================
-
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
-  // Função mágica que gera e compartilha o PDF
   Future<void> _gerarECompartilharPDF(
     BuildContext context,
     List<Map<String, dynamic>> eventos,
   ) async {
     final pdf = pw.Document();
-
-    // Filtra apenas eventos da última semana para o relatório
     final umaSemanaAtras = DateTime.now().subtract(const Duration(days: 7));
-    final eventosRecentes = eventos.where((e) {
-      final data = DateTime.parse(e['criado_em']);
-      return data.isAfter(umaSemanaAtras);
-    }).toList();
+    final eventosRecentes = eventos
+        .where((e) => DateTime.parse(e['criado_em']).isAfter(umaSemanaAtras))
+        .toList();
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        // Usamos pwContext aqui para não dar conflito com o context da tela do Flutter
         build: (pw.Context pwContext) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1142,16 +1075,12 @@ class ReportsScreen extends StatelessWidget {
                 style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey),
               ),
               pw.SizedBox(height: 20),
-
-              // Tabela do Relatório
               pw.TableHelper.fromTextArray(
                 headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.white,
                 ),
-                headerDecoration: const pw.BoxDecoration(
-                  color: PdfColors.pink,
-                ), // Corrigido para pink
+                headerDecoration: const pw.BoxDecoration(color: PdfColors.pink),
                 cellAlignment: pw.Alignment.centerLeft,
                 headers: ['Data/Hora', 'Tipo', 'Detalhes'],
                 data: eventosRecentes.map((e) {
@@ -1159,7 +1088,6 @@ class ReportsScreen extends StatelessWidget {
                   final formato = DateFormat('dd/MM/yyyy HH:mm')
                       .format(dataHora);
                   final tipo = e['tipo'].toString().toUpperCase();
-
                   String detalhes = '';
                   final dados = e['dados'] as Map<String, dynamic>;
                   if (tipo == 'ALIMENTACAO') {
@@ -1178,7 +1106,6 @@ class ReportsScreen extends StatelessWidget {
                   } else if (tipo == 'REMEDIO') {
                     detalhes = '${dados['nome']} (${dados['dose']})';
                   }
-
                   return [formato, tipo, detalhes];
                 }).toList(),
               ),
@@ -1187,8 +1114,6 @@ class ReportsScreen extends StatelessWidget {
         },
       ),
     );
-
-    // Usa a biblioteca 'printing' para abrir a tela de compartilhar/imprimir
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Relatorio_Victoria.pdf',
@@ -1198,9 +1123,7 @@ class ReportsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context)
-          .colorScheme
-          .surface, // Corrigido: background mudou para surface
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
           'Evolução',
@@ -1219,7 +1142,6 @@ class ReportsScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return const Center(child: CircularProgressIndicator());
-
           final eventos = snapshot.data ?? [];
           final eventosPeso = eventos
               .where((e) => e['tipo'] == 'peso')
@@ -1231,9 +1153,6 @@ class ReportsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===============================
-                // CARTÃO DO GRÁFICO (CURVA DE PESO)
-                // ===============================
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -1275,7 +1194,6 @@ class ReportsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       SizedBox(
                         height: 200,
                         child: eventosPeso.isEmpty
@@ -1370,12 +1288,7 @@ class ReportsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // ===============================
-                // BOTÃO DE EXPORTAR PDF
-                // ===============================
                 Text(
                   'Exportar Relatório',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -1384,7 +1297,6 @@ class ReportsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 Material(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -1462,6 +1374,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 }
+
 // ==========================================
 // 4. MODAIS E AÇÕES (SALVANDO NO BANCO)
 // ==========================================
@@ -1479,23 +1392,21 @@ Future<void> _salvarEvento(
       'dados': dados,
     });
 
-    // ======== LÓGICA DO ALARME ========
+    // Alarme automático de alimentação e remédio
     if (tipo == 'alimentacao') {
-      // Agenda para o intervalo padrão (ex: 3 horas)
       await agendarLembrete(
-        1, // ID da notificação (substitui a anterior para não encher o celular)
+        1,
         'Hora de papar! 🍼',
         'Já se passaram $globalIntervaloMamada horas desde a última mamada da Victoria.',
         globalIntervaloMamada,
       );
     }
-    // ==================================
 
     if (context.mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registro salvo! Lembrete programado. ⏰'),
+          content: Text('Registro salvo! Lembrete ativado. ⏰'),
           backgroundColor: Colors.green,
         ),
       );
@@ -1783,7 +1694,6 @@ class _ContadorPeito extends StatelessWidget {
   }
 }
 
-/// Novo Modal de Peso e Altura
 class ModalPeso extends StatefulWidget {
   const ModalPeso({super.key});
   @override
@@ -1898,7 +1808,6 @@ class _ModalPesoState extends State<ModalPeso> {
   }
 }
 
-/// Novo Modal de Remédio
 class ModalRemedio extends StatefulWidget {
   const ModalRemedio({super.key});
   @override
@@ -1946,7 +1855,7 @@ class _ModalRemedioState extends State<ModalRemedio> {
           TextField(
             controller: _nomeController,
             decoration: InputDecoration(
-              labelText: 'Nome do Remédio (ex: Tylenol)',
+              labelText: 'Nome do Remédio',
               prefixIcon: const Icon(Icons.medical_services_rounded),
               filled: true,
               fillColor: Colors.grey.shade100,
@@ -1960,7 +1869,7 @@ class _ModalRemedioState extends State<ModalRemedio> {
           TextField(
             controller: _doseController,
             decoration: InputDecoration(
-              labelText: 'Dosagem (ex: 2 gotas, 5ml)',
+              labelText: 'Dosagem (ex: 2 gotas)',
               prefixIcon: const Icon(Icons.vaccines_rounded),
               filled: true,
               fillColor: Colors.grey.shade100,
@@ -2038,7 +1947,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
